@@ -1,0 +1,74 @@
+#load data
+setwd('C:/Users/USER/Desktop/Rlanguage/riii')
+load('./Statistics/cdc.Rdata')
+
+#view data
+str(cdc)
+head(cdc)
+names(cdc)
+
+#transform the variables to the factor categorical type
+cdc$genhlth = as.factor(cdc$genhlth)
+cdc$exerany = as.factor(cdc$exerany)
+cdc$hlthplan = as.factor(cdc$hlthplan)
+cdc$smoke100 = as.factor(cdc$smoke100)
+cdc$gender = as.factor(cdc$gender)
+
+#transform the factor to table
+exercised <- table(cdc$exerany)/20000
+healthplan <- table(cdc$hlthplan)/20000
+smoked <- table(cdc$smoke100)/20000
+smoker <- table(cdc$gender, cdc$smoke100)
+
+#build matrix of health_status
+health_status <- t(matrix(c(exercised,healthplan,smoked), nrow = 3, byrow = TRUE))
+colnames(health_status) = c('exercised', 'healthplan', 'smoked')
+rownames(health_status) = c('0','1')
+
+#download ggplot2 and RColorBrewer
+install.packages('RColorBrewer')
+library(RColorBrewer)
+install.packages('ggplot2')
+library(ggplot2)
+
+
+#請問資料中各健康狀況的分佈比例為何?
+table(cdc$genhlth) / nrow(cdc)
+
+#繪製exerany, hlthplan, smoke100的分布比例圖
+barplot(health_status, main = 'Health Status', col = brewer.pal(n = 3, name = 'RdBu') , legend = TRUE)
+
+#請問資料中男女生有抽菸比率各為多少??
+table(cdc$gender, cdc$smoke100) / nrow(cdc)
+
+piepercent <- paste(round(100*smoker[,2]/sum(smoker[,2]), 1), "%", sep="")
+pie(smoker[,2], labels = piepercent, main = "Smoker by Gender", col = brewer.pal(n = 2, name = "RdBu"))
+legend("topright", c("Female","Male"), cex=0.85, fill = brewer.pal(n = 2, name = "RdBu"))
+
+#請繪製年紀的直方圖
+hist(cdc$age, main="Age", xlab = "Age", breaks = 4, col = brewer.pal(n = 4, name = "RdBu"))
+
+#ggplot(cdc,aes(age)) + geom_histogram(bins = 5, fill = brewer.pal(n = 5, name = "RdBu"))
+
+#請繪製不同健康狀況族群BMI指數的盒鬚圖
+#註: 英制bmi公式 體重 / ⾝高^2 * 703
+bmi <- (cdc$weight/(cdc$height)^2)*703
+ggplot(cdc, aes(x=genhlth, y=bmi)) + geom_boxplot()
+
+#繪製exerany, hlthplan, smoke100的bmi指數盒鬚圖
+par(mfrow = c(1,3))
+boxplot(bmi ~ cdc$exerany, xlab = "exercised", col = brewer.pal(n = 2, name = "RdBu"))
+boxplot(bmi ~ cdc$hlthplan, xlab = "healthplan", col = brewer.pal(n = 2, name = "RdBu"))
+boxplot(bmi ~ cdc$smoke100, xlab = "smoked", col = brewer.pal(n = 2, name = "RdBu"))
+
+#請問身高、體重、年紀的相關係數為何?
+cor(cdc[,c('height','weight', 'age')])
+
+#c (cor(cdc$height,cdc$weight), cor(cdc$height,cdc$age), cor(cdc$weight,cdc$age))
+
+par(mfrow = c(1,3))
+plot(cdc$height,cdc$weight, main = cor(cdc$height,cdc$weight))
+plot(cdc$height,cdc$age, main = cor(cdc$height,cdc$age))
+plot(cdc$weight,cdc$age, main = cor(cdc$weight,cdc$age))
+
+#ggplot(cdc, aes(x=cdc$height, y=cdc$weight)) + geom_point(aes(color = cdc$age))
